@@ -37,7 +37,7 @@ static std::vector<char> readFile(const std::string& filename)
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
     
     if (!file.is_open()) {
-        throw std::runtime_error("failed to open file!")
+        throw std::runtime_error("failed to open file!");
     }
     
     size_t fileSize = (size_t) file.tellg();
@@ -200,7 +200,7 @@ private:
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = queueFamilyIndices;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
         
         if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create command pool!");
@@ -228,7 +228,7 @@ private:
             framebufferInfo.layers = 1;
             
             if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create framebuffer!")
+                throw std::runtime_error("failed to create framebuffer!");
             }
         }
     }
@@ -249,7 +249,7 @@ private:
         
         VkAttachmentReference colorAttachmentRef{};
         colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -263,7 +263,7 @@ private:
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
         
-        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, *renderPass) != VK_SUCCESS) {
+        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
             throw std::runtime_error("failed to create render pass!");
         }
     }
@@ -383,7 +383,7 @@ private:
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
         
         if (!vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout.")
+            throw std::runtime_error("failed to create pipeline layout.");
         }
         
         VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -408,7 +408,7 @@ private:
         pipelineInfo.basePipelineIndex = -1;
         
         if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create graphic pipeline!")
+            throw std::runtime_error("failed to create graphic pipeline!");
         }
         
         
@@ -419,14 +419,14 @@ private:
     
     VkShaderModule createShaderModule(std::vector<char>& code)
     {
-        VkShaderModuleCreateInfo createInfo;
+        VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<uint32_t*>(code.data());
         
         VkShaderModule shaderModule;
         if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create shader module!")
+            throw std::runtime_error("failed to create shader module!");
         }
         
         return shaderModule;
@@ -440,6 +440,9 @@ private:
             VkImageViewCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = swapChainImages[i];
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            createInfo.format = swapChainImageFormat;
+            
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
